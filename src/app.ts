@@ -41,6 +41,8 @@ const main = async () => {
 
     if (nextUrl) {
       urlToScrape = nextUrl;
+      // be a good citizen and wait a little bit in between pages
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       // uncomment this for testing to process just one page
       // break;
     } else {
