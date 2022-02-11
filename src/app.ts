@@ -66,7 +66,7 @@ const scrapePage = async (
   const content = dom.window.document.querySelector(CONTENT_ELEMENT_SELECTOR);
   invariant(
     content,
-    `Content parent node not found: ${CONTENT_ELEMENT_SELECTOR}`
+    `Content element not found: ${CONTENT_ELEMENT_SELECTOR} in ${url}`
   );
 
   let nextUrl = dom.window.document
@@ -84,7 +84,12 @@ const cleanUpContent = (content: Element) => {
   // remove everything from NODES_TO_REMOVE
   for (const nodeToRemove of ELEMENTS_TO_REMOVE) {
     const element = content.querySelector(nodeToRemove.selector);
-    invariant(element, `Node to remove not found: ${nodeToRemove.selector}`);
+    if (!element) {
+      console.log(
+        `Warning: Element to remove not found: ${nodeToRemove.selector}`
+      );
+      continue;
+    }
 
     if (nodeToRemove.content && nodeToRemove.attribute) {
       if (
