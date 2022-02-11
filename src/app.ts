@@ -125,7 +125,11 @@ const savePage = async (title: string, content: Element) => {
     </body>
   </html>`;
 
-  const filename = `${title.replace(/[^\d]/g, '')}.html`;
+  const filename = `${title
+    // start at the last "("
+    .slice(title.lastIndexOf('('))
+    // drop everything except the numbers
+    .replace(/[^\d]/g, '')}.html`;
 
   console.log(`Saving ${title}`);
   await fs.writeFile(`output/${filename}`, html);
