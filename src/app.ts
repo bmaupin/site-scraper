@@ -1,3 +1,4 @@
+import fs from 'fs/promises';
 import { JSDOM } from 'jsdom';
 import invariant from 'tiny-invariant';
 
@@ -32,19 +33,16 @@ const main = async () => {
   let urlToScrape = FIRST_URL;
 
   while (true) {
-    // get all content of first url
     let { title, content, nextUrl } = await scrapePage(urlToScrape);
 
     content = cleanUpContent(content);
 
-    // TODO: do something with the content; save to an HTML file for now?
-    console.log('title=', title);
-    console.log('content=', content.innerHTML);
-    console.log('nextUrl=', nextUrl);
+    await savePage(title, content);
 
     if (nextUrl) {
-      // TODO: uncomment this
-      // urlToScrape = nextUrl;
+      urlToScrape = nextUrl;
+      // uncomment this for testing to process just one page
+      // break;
     } else {
       break;
     }
@@ -106,6 +104,24 @@ const cleanUpContent = (content: Element) => {
   }
 
   return content;
+};
+
+// TODO: replace this with code to add to EPUB
+const savePage = async (title: string, content: Element) => {
+  const html = `<!doctype html>
+  <html>
+    <head>
+      <title>${title}</title>
+    </head>
+    <body>
+      ${content.innerHTML.trim()}
+    </body>
+  </html>`;
+
+  const filename = `${title.replace(/[^\d]/g, '')}.html`;
+
+  console.log(`Saving ${title}`);
+  await fs.writeFile(`output/${filename}`, html);
 };
 
 main();

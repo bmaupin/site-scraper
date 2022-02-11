@@ -1,5 +1,5 @@
 {
-  "name": "site-scraper",
+  "name": "website-to-epub",
   "version": "0.0.1",
   "description": "",
   "main": "src/app.ts",
