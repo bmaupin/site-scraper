@@ -88,26 +88,25 @@ const scrapePage = async (
 
 // remove any undesired nodes from the content
 const cleanUpContent = (content: Element) => {
-  // remove everything from NODES_TO_REMOVE
-  for (const nodeToRemove of ELEMENTS_TO_REMOVE) {
-    const element = content.querySelector(nodeToRemove.selector);
-    if (!element) {
-      console.log(
-        `Warning: Element to remove not found: ${nodeToRemove.selector}`
-      );
-      continue;
-    }
-
-    if (nodeToRemove.content && nodeToRemove.attribute) {
-      if (
-        element
-          ?.getAttribute(nodeToRemove.attribute)
-          ?.includes(nodeToRemove.content)
-      ) {
-        element.remove();
+  for (const elementProperties of ELEMENTS_TO_REMOVE) {
+    for (const matchingElement of content.querySelectorAll(
+      elementProperties.selector
+    )) {
+      if (!matchingElement) {
+        continue;
       }
-    } else {
-      element.remove();
+
+      if (elementProperties.content && elementProperties.attribute) {
+        if (
+          matchingElement
+            ?.getAttribute(elementProperties.attribute)
+            ?.includes(elementProperties.content)
+        ) {
+          matchingElement.remove();
+        }
+      } else {
+        matchingElement.remove();
+      }
     }
   }
 
