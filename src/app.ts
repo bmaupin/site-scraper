@@ -25,6 +25,8 @@ const ELEMENTS_TO_REMOVE = [
 // DOM selector matching the next URL to scrape
 const NEXT_URL_SELECTOR = 'a[title="Next Article"]';
 
+const WAIT_SECONDS = 5;
+
 interface HtmlElementProperties {
   // DOM selector
   selector: string;
@@ -46,10 +48,10 @@ const main = async () => {
 
     if (nextUrl) {
       urlToScrape = nextUrl;
-      // be a good citizen and wait a little bit in between pages
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       // uncomment this for testing to process just one page
       // break;
+      // be a good citizen and wait a little bit in between pages
+      await new Promise((resolve) => setTimeout(resolve, WAIT_SECONDS * 1000));
     } else {
       break;
     }
@@ -130,6 +132,7 @@ const savePage = async (title: string, content: Element) => {
     </body>
   </html>`;
 
+  // TODO: this is very specific to Offqc; we'll want something more generic
   const filename = `${title
     // start at the last "("
     .slice(title.lastIndexOf('('))
