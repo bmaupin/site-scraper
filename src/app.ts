@@ -15,6 +15,11 @@ const ELEMENTS_TO_REMOVE = [
     attribute: 'data-src',
     content: 'stats.wordpress.com/b.gif',
   },
+  {
+    selector: 'img[data-src]',
+    attribute: 'data-src',
+    content: 'pixel.wp.com/b.gif',
+  },
 ] as HtmlElementProperties[];
 
 // DOM selector matching the next URL to scrape
