@@ -3,7 +3,7 @@ import { JSDOM } from 'jsdom';
 import invariant from 'tiny-invariant';
 
 // First URL to scrape
-const FIRST_URL = 'https://offqc1.rssing.com/chan-7703398/article1.html';
+const FIRST_URL = 'https://offqc1.rssing.com/chan-7703398/article490.html';
 
 // DOM selector of the parent element containing the main content to scrape
 const CONTENT_ELEMENT_SELECTOR = 'div.cs-single-post-content > div';
