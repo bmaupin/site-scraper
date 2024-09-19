@@ -19,10 +19,8 @@
 import fs from 'fs/promises';
 import { JSDOM } from 'jsdom';
 
-// Element where the page title will come from. Leave empty to use the HTML page title
-const titleSelector = 'h1.pageTitle';
-
-const blacklistSelectors = [
+const blacklistSelectors: string[] = [
+  // If any selectors are added here, any matching elements will be removed from the final HTML
   'style',
   'script',
   'header',
@@ -46,19 +44,34 @@ const blacklistSelectors = [
   'footer',
 ];
 
-const whitelistSelectors = [
-  'div.mainContent h1.pageTitle',
-  'div.mainContent p.pageSubtitle',
-  'div.mainContent div.text h3.title',
-  'div.mainContent div.text p.copy',
-  'div.mainContent div.expansionBlock.variation1 h3',
-  'div.mainContent div.expansionBlock.variation1 div.expandedContent',
-  'div.mainContent div.expansionBlock.variation2 h3',
-  'div.mainContent div.expansionBlock.variation2 div.expandedContent',
-  'div.mainContent div.expansionBlock.variation3 h3',
-  'div.mainContent div.expansionBlock.variation3 div.expandedContent',
-  'div.mainContent div.extra div.section',
+const whitelistSelectors: string[] = [
+  // If any selectors are added here, only matching elements will end up in the final HTML
 ];
+
+// Add any extra site-specific logic to apply here
+const applyExtraLogic = (document: Document) => {
+  // Override HTML title
+  document.title = document.querySelector('h1.pageTitle')?.textContent ?? '';
+
+  // Remove external links
+  const anchorElements = document.querySelectorAll('a');
+  anchorElements.forEach((anchor) => {
+    anchor.setAttribute('href', '');
+  });
+
+  // Remove all existing h1 elements to prepare for the next section
+  const h1Elements = document.querySelectorAll('h1');
+  h1Elements.forEach((h1) => h1.remove());
+
+  // Then insert a custom h1 element just after the body; this prevents pandoc from
+  // creating an extra one and allows pages to be properly split using --split-level=1
+  const h1 = document.createElement('h1');
+  h1.textContent = document.title;
+  const body = document.body;
+  if (body.firstChild) {
+    body.insertBefore(h1, body.firstChild);
+  }
+};
 
 const main = async () => {
   let htmlInputPath = undefined;
@@ -87,23 +100,33 @@ const main = async () => {
 
 const cleanHtml = (htmlInputContents: Buffer): string => {
   // Parse the HTML using jsdom
-  const dom = new JSDOM(htmlInputContents);
-  const document = dom.window.document;
+  let dom = new JSDOM(htmlInputContents);
+  let document = dom.window.document;
 
-  if (titleSelector) {
-    document.title = document.querySelector(titleSelector)?.textContent ?? '';
+  // If any whitelist selectors are defined, create a new HTML document with only those
+  // matching elements
+  if (whitelistSelectors.length > 0) {
+    let selectedElements = [];
+    for (const whiteListSelector of whitelistSelectors) {
+      selectedElements.push(document.querySelectorAll(whiteListSelector));
+    }
+
+    const newDom = new JSDOM(
+      `<!DOCTYPE html><html><head><title>${document.title}</title></head><body></body></html>`
+    );
+    const newDocument = newDom.window.document;
+
+    for (const selectedSubElements of selectedElements) {
+      for (const selectedSubElement of selectedSubElements) {
+        newDocument.body.appendChild(selectedSubElement.cloneNode(true));
+      }
+    }
+
+    dom = newDom;
+    document = newDocument;
   }
 
-  // let title = document.title;
-  // if (titleSelector) {
-  //   title = document.querySelector(titleSelector)?.textContent ?? '';
-  // }
-
-  const anchorElements = document.querySelectorAll('a');
-
-  anchorElements.forEach((anchor) => {
-    anchor.setAttribute('href', ''); // Set the href attribute to an empty string
-  });
+  applyExtraLogic(document);
 
   for (const blacklistSelector of blacklistSelectors) {
     const elementsToRemove = document.querySelectorAll(blacklistSelector);
@@ -112,26 +135,6 @@ const cleanHtml = (htmlInputContents: Buffer): string => {
   }
 
   const newHtml = dom.serialize();
-
-  // let selectedElements = [];
-  // for (const whiteListSelector of whitelistSelectors) {
-  //   selectedElements.push(document.querySelectorAll(whiteListSelector));
-  // }
-
-  // // Create a new document for the output HTML
-  // const outputDom = new JSDOM(
-  //   `<!DOCTYPE html><html><head><title>${title}</title></head><body></body></html>`
-  // );
-  // const outputDocument = outputDom.window.document;
-
-  // for (const selectedSubElements of selectedElements) {
-  //   for (const selectedSubElement of selectedSubElements) {
-  //     outputDocument.body.appendChild(selectedSubElement.cloneNode(true)); // Use cloneNode(true) to copy element with its children
-  //   }
-  // }
-
-  // // Serialize the new HTML content
-  // const newHtml = outputDom.serialize();
 
   return newHtml;
 };
