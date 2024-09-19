@@ -31,7 +31,6 @@ const blacklistSelectors: string[] = [
   'div.mainContent div.textBelow',
   'div.mainContent div.quoteBlock div.top',
   'div.mainContent .ng-hide',
-  'div.mainContent span.statistic.after',
   'div.mainContent div.graph',
   'div.mainContent .viewToggle',
   'div.mainContent div.expansionBlock div.blockVid',
@@ -58,6 +57,18 @@ const applyExtraLogic = (document: Document) => {
   anchorElements.forEach((anchor) => {
     anchor.setAttribute('href', '');
   });
+
+  const statisticAfterElements = document.querySelectorAll(
+    'div.mainContent span.statistic.after'
+  );
+  const statisticBeforeElements = document.querySelectorAll(
+    'div.mainContent span.statistic.before'
+  );
+  if (statisticAfterElements.length > 0 && statisticBeforeElements.length > 0) {
+    statisticAfterElements.forEach((element) => {
+      element.remove();
+    });
+  }
 
   // Remove all existing h1 elements to prepare for the next section
   const h1Elements = document.querySelectorAll('h1');
