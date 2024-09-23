@@ -29,9 +29,14 @@ const blacklistSelectors: string[] = [
   'div.mainContent #carousel div.video-container',
   'div.mainContent #carousel div.moreVideos',
   'div.mainContent div.textBelow',
+  'div.mainContent div.stages:has(div.spacer)',
   'div.mainContent .ng-hide',
   'div.mainContent div[data-lazy-bg-image]',
   'div.mainContent .viewToggle',
+  'div.mainContent .expansionLink',
+  'div.mainContent .gif-player .loading',
+  'div.mainContent .gif-player .preview',
+  'div.mainContent .gif-player .stop',
   'div.mainContent div.expansionBlock div.blockVid',
   'div.mainContent div.expansionBlock span.blockVid',
   'div.mainContent div.expansionBlock div.blockTouch',
@@ -56,6 +61,38 @@ const applyExtraLogic = (document: Document) => {
     anchor.setAttribute('href', '');
   });
 
+  // Remove embedded style from all elements
+  const elementsWithStyle = document.querySelectorAll('[style]');
+  for (const elementWithStyle of elementsWithStyle) {
+    elementWithStyle.removeAttribute('style');
+  }
+
+  // Conditionally remove some elements if they exist at same time as other elements
+  const copySmElements = document.querySelectorAll('div.mainContent p.copy.sm');
+  const copyM6Elements = document.querySelectorAll('div.mainContent p.copy.m6');
+  if (copySmElements.length > 0 && copyM6Elements.length > 0) {
+    copySmElements.forEach((element) => {
+      element.remove();
+    });
+  }
+  const topSmElements = document.querySelectorAll('div.mainContent div.top.sm');
+  const topXlElements = document.querySelectorAll('div.mainContent div.top.xl');
+  if (topSmElements.length > 0 && topXlElements.length > 0) {
+    topSmElements.forEach((element) => {
+      element.remove();
+    });
+  }
+  const quoteM7Elements = document.querySelectorAll(
+    'div.mainContent div.topQuote p.quote.m7'
+  );
+  const quoteElements = document.querySelectorAll(
+    'div.mainContent div.topQuote p.quote'
+  );
+  if (quoteM7Elements.length > 0 && quoteElements.length > 0) {
+    quoteM7Elements.forEach((element) => {
+      element.remove();
+    });
+  }
   const statisticAfterElements = document.querySelectorAll(
     'div.mainContent span.statistic.after'
   );
@@ -66,6 +103,41 @@ const applyExtraLogic = (document: Document) => {
     statisticAfterElements.forEach((element) => {
       element.remove();
     });
+  }
+  const gifMovieElements = document.querySelectorAll(
+    'div.mainContent .gif-player .gif-movie'
+  );
+  const gifStillElements = document.querySelectorAll(
+    'div.mainContent .gif-player .gif-still'
+  );
+  if (gifMovieElements.length > 0 && gifStillElements.length > 0) {
+    gifMovieElements.forEach((element) => {
+      element.remove();
+    });
+  }
+
+  const divLazyBgImageElements = document.querySelectorAll(
+    'div.quoteBlock div[data-lazy-bg-image]'
+  );
+  for (const divLazyBgImageElement of divLazyBgImageElements) {
+    const h2Element = divLazyBgImageElement.querySelector('h2');
+    if (divLazyBgImageElement && h2Element) {
+      const blockquote = document.createElement('blockquote');
+      blockquote.textContent = h2Element.textContent;
+      divLazyBgImageElement.replaceWith(blockquote);
+    }
+  }
+
+  // Insert a horizontal row if an element has a 'separator' class
+  const elementsWithSeparator = document.querySelectorAll(
+    'div.mainContent .separator'
+  );
+  for (const elementWithSeparator of elementsWithSeparator) {
+    const hr = document.createElement('hr');
+    elementWithSeparator.parentNode?.insertBefore(
+      hr,
+      elementWithSeparator.nextSibling
+    );
   }
 
   // Remove all existing h1 elements to prepare for the next section
