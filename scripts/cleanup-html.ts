@@ -19,7 +19,7 @@
 import fs from 'fs/promises';
 import { JSDOM } from 'jsdom';
 
-const blacklistSelectors: string[] = [
+const blacklistSelectorsBeforeCustomLogic: string[] = [
   // If any selectors are added here, any matching elements will be removed from the final HTML
   'style',
   'script',
@@ -46,12 +46,16 @@ const blacklistSelectors: string[] = [
   'footer',
 ];
 
+const blacklistSelectorsAfterCustomLogic: string[] = [
+  'div.mainContent div[data-lazy-bg-image]',
+];
+
 const whitelistSelectors: string[] = [
   // If any selectors are added here, only matching elements will end up in the final HTML
 ];
 
 // Add any extra site-specific logic to apply here
-const applyExtraLogic = (document: Document) => {
+const applyCustomLogic = (document: Document) => {
   // Override HTML title
   document.title = document.querySelector('h1.pageTitle')?.textContent ?? '';
 
@@ -207,9 +211,15 @@ const cleanHtml = (htmlInputContents: Buffer): string => {
     document = newDocument;
   }
 
-  applyExtraLogic(document);
+  for (const blacklistSelector of blacklistSelectorsBeforeCustomLogic) {
+    const elementsToRemove = document.querySelectorAll(blacklistSelector);
 
-  for (const blacklistSelector of blacklistSelectors) {
+    elementsToRemove.forEach((element) => element.remove());
+  }
+
+  applyCustomLogic(document);
+
+  for (const blacklistSelector of blacklistSelectorsAfterCustomLogic) {
     const elementsToRemove = document.querySelectorAll(blacklistSelector);
 
     elementsToRemove.forEach((element) => element.remove());
