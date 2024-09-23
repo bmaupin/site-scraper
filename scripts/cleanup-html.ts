@@ -31,7 +31,6 @@ const blacklistSelectorsBeforeCustomLogic: string[] = [
   'div.mainContent div.textBelow',
   'div.mainContent div.stages:has(div.spacer)',
   'div.mainContent .ng-hide',
-  'div.mainContent div[data-lazy-bg-image]',
   'div.mainContent .viewToggle',
   'div.mainContent .expansionLink',
   'div.mainContent .gif-player .loading',
@@ -42,6 +41,7 @@ const blacklistSelectorsBeforeCustomLogic: string[] = [
   'div.mainContent div.expansionBlock div.blockTouch',
   'div.mainContent div.expansionBlock svg.icon-arrow-thin',
   'div.mainContent div.expandedContent span.blockVid',
+  'div.mainContent div.quoteBlock .m7',
   'div[onload]',
   'footer',
 ];
@@ -61,9 +61,14 @@ const applyCustomLogic = (document: Document) => {
 
   // Remove external links
   const anchorElements = document.querySelectorAll('a');
-  anchorElements.forEach((anchor) => {
-    anchor.setAttribute('href', '');
-  });
+  for (const anchorElement of anchorElements) {
+    const textContent = anchorElement.textContent;
+    if (textContent) {
+      // Create a text node with the link's text
+      const textNode = document.createTextNode(textContent);
+      anchorElement.replaceWith(textNode);
+    }
+  }
 
   // Remove embedded style from all elements
   const elementsWithStyle = document.querySelectorAll('[style]');
@@ -83,17 +88,6 @@ const applyCustomLogic = (document: Document) => {
   const topXlElements = document.querySelectorAll('div.mainContent div.top.xl');
   if (topSmElements.length > 0 && topXlElements.length > 0) {
     topSmElements.forEach((element) => {
-      element.remove();
-    });
-  }
-  const quoteM7Elements = document.querySelectorAll(
-    'div.mainContent div.topQuote p.quote.m7'
-  );
-  const quoteElements = document.querySelectorAll(
-    'div.mainContent div.topQuote p.quote'
-  );
-  if (quoteM7Elements.length > 0 && quoteElements.length > 0) {
-    quoteM7Elements.forEach((element) => {
       element.remove();
     });
   }
