@@ -20,8 +20,8 @@ import fs from 'fs/promises';
 import { JSDOM } from 'jsdom';
 
 const blacklistSelectorsBeforeCustomLogic: string[] = [
-  // If any selectors are added here, any matching elements will be removed from the final HTML
-  // 'style',
+  // If any selectors are added here, any matching elements will be removed from the final HTML before custom logic
+  'style',
   'script',
   'header',
   '.hint-popups',
@@ -36,23 +36,19 @@ const blacklistSelectorsBeforeCustomLogic: string[] = [
   'div.main-content .slider-controls',
   'div.main-content .gif-player .gif-ctrl',
   'div.main-content .custom-gif-player .gif-ctrl',
-
+  'div.main-content .gif-block .play-custom-gif',
+  'div.main-content .gif-block .gif-toggle',
+  'div.main-content .gif-container .link',
+  'div.main-content .main-content-container.first.last .sm-only',
+  'div.main-content .expansion-link',
   'div.main-content .ng-hide',
   'div.main-content .feedback-banner',
-
-  // 'div.mainContent div.stages:has(div.spacer)',
-  // 'div.mainContent .viewToggle',
-  // 'div.mainContent .expansionLink',
-  // 'div.mainContent div.expansionBlock div.blockTouch',
-  // 'div.mainContent div.expansionBlock svg.icon-arrow-thin',
-  // 'div.mainContent div.expandedContent span.blockVid',
-  // 'div.mainContent div.quoteBlock .m7',
   'div[onload]',
   'footer',
 ];
 
 const blacklistSelectorsAfterCustomLogic: string[] = [
-  'div.mainContent div[data-lazy-bg-image]',
+  // If any selectors are added here, any matching elements will be removed from the final HTML after custom logic
 ];
 
 const whitelistSelectors: string[] = [
@@ -73,26 +69,21 @@ const applyCustomLogic = (document: Document) => {
       // Create a text node with the link's text
       const textNode = document.createTextNode(textContent);
       anchorElement.replaceWith(textNode);
+    } else {
+      // If the link has no text, remove it altogether
+      anchorElement.remove();
     }
   }
 
   // Remove embedded style from all elements
   const elementsWithStyle = document.querySelectorAll('[style]');
   for (const elementWithStyle of elementsWithStyle) {
-    if (elementWithStyle.tagName !== 'svg') {
-      elementWithStyle.removeAttribute('style');
-    }
+    elementWithStyle.removeAttribute('style');
   }
-  const styles = document.querySelectorAll('style');
-  for (const style of styles) {
-    const parentNode = style.parentNode as HTMLElement;
-    console.log('parentNode?.tagName=', parentNode?.tagName);
-    if (
-      parentNode?.tagName.toLowerCase() !== 'defs' &&
-      parentNode?.tagName.toLowerCase() !== 'svg'
-    ) {
-      style.remove(); // Remove the style element if it's not an immediate child of an SVG
-    }
+  const elementsWithAriaDescribedBy =
+    document.querySelectorAll('[aria-describedby]');
+  for (const elementWithAriaDescribedBy of elementsWithAriaDescribedBy) {
+    elementWithAriaDescribedBy.removeAttribute('aria-describedby');
   }
 
   // Set inline styles for specific elements
@@ -100,42 +91,16 @@ const applyCustomLogic = (document: Document) => {
   for (const image of images) {
     image.style.marginRight = '50px';
   }
-  const svgIcons = document.querySelectorAll('svg.icon');
-  for (const svgIcon of svgIcons) {
-    const svgElement = svgIcon as SVGElement;
-    svgElement.style.height = '26px';
-  }
-  const graphContainers = document.querySelectorAll('div.graph-container');
-  for (const graphContainer of graphContainers) {
-    const graphContainerElement = graphContainer as HTMLElement;
-    graphContainerElement.style.maxWidth = '50%';
-  }
 
-  const graphs = document.querySelectorAll('div.main-content div.graph');
-  for (const graph of graphs) {
-    const svgSm = graph.querySelector('svg[class*="-sm"]');
-    const svg640 = graph.querySelector('svg[class*="-640"]');
-    const svgLg = graph.querySelector('svg[class*="-lg"]');
-    if (svgSm && svg640 && svgLg) {
-      svgSm.remove();
-      svgLg.remove();
+  // Remove all svg elements that aren't icons
+  const svgs = document.querySelectorAll('svg');
+  for (const svg of svgs) {
+    const svgElement = svg as SVGElement;
+    if (svgElement.className.baseVal.includes('icon')) {
+      svgElement.style.height = '26px';
+    } else {
+      svg.remove();
     }
-  }
-  const diagramContainers = document.querySelectorAll(
-    'div.main-content div[class*="-diagram-container"]'
-  );
-  for (const diagramContainer of diagramContainers) {
-    const svg340 = diagramContainer.querySelector('svg[class*="-340"]');
-    const svg640 = diagramContainer.querySelector('svg[class*="-640"]');
-    const svg768 = diagramContainer.querySelector('svg[class*="-768"]');
-    const svg1024 = diagramContainer.querySelector('svg[class*="-1024"]');
-    if (svg340 && svg640 && svg768 && svg1024) {
-      svg340.remove();
-      svg768.remove();
-      svg1024.remove();
-    }
-    const diagramContainerElement = diagramContainer as HTMLElement;
-    diagramContainerElement.style.maxWidth = '50%';
   }
 
   // Conditionally remove some elements if they exist at same time as other elements
@@ -143,6 +108,11 @@ const applyCustomLogic = (document: Document) => {
     document,
     'div.main-content .gif-player .gif-still',
     'div.main-content .gif-player .gif-movie'
+  );
+  removeDuplicateElements(
+    document,
+    'div.main-content .gif-block .gif-still',
+    'div.main-content .gif-block .gif-movie'
   );
   removeDuplicateElements(
     document,
