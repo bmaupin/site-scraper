@@ -21,7 +21,7 @@ import { JSDOM } from 'jsdom';
 
 const blacklistSelectorsBeforeCustomLogic: string[] = [
   // If any selectors are added here, any matching elements will be removed from the final HTML
-  'style',
+  // 'style',
   'script',
   'header',
   '.hint-popups',
@@ -30,17 +30,17 @@ const blacklistSelectorsBeforeCustomLogic: string[] = [
   'div.main-content svg[class*="-icon"]',
   'div.main-content .carousel #carousel',
   'div.main-content .carousel .top-video__carousel-block',
+  'div.main-content div.no-carousel .top-video__container',
   'div.main-content .basic-video-block',
-  'div.main-content .quote-slider__quote.slick-cloned',
+  'div.main-content .slick-list .slick-cloned',
   'div.main-content .slider-controls',
   'div.main-content .gif-player .gif-ctrl',
+  'div.main-content .custom-gif-player .gif-ctrl',
 
+  'div.main-content .ng-hide',
   'div.main-content .feedback-banner',
 
-  // 'div.mainContent div.noCarousel div.video-container',
-  // 'div.mainContent div.textBelow',
   // 'div.mainContent div.stages:has(div.spacer)',
-  // 'div.mainContent .ng-hide',
   // 'div.mainContent .viewToggle',
   // 'div.mainContent .expansionLink',
   // 'div.mainContent div.expansionBlock div.blockTouch',
@@ -79,20 +79,101 @@ const applyCustomLogic = (document: Document) => {
   // Remove embedded style from all elements
   const elementsWithStyle = document.querySelectorAll('[style]');
   for (const elementWithStyle of elementsWithStyle) {
-    elementWithStyle.removeAttribute('style');
+    if (elementWithStyle.tagName !== 'svg') {
+      elementWithStyle.removeAttribute('style');
+    }
+  }
+  const styles = document.querySelectorAll('style');
+  for (const style of styles) {
+    const parentNode = style.parentNode as HTMLElement;
+    console.log('parentNode?.tagName=', parentNode?.tagName);
+    if (
+      parentNode?.tagName.toLowerCase() !== 'defs' &&
+      parentNode?.tagName.toLowerCase() !== 'svg'
+    ) {
+      style.remove(); // Remove the style element if it's not an immediate child of an SVG
+    }
+  }
+
+  // Set inline styles for specific elements
+  const images = document.querySelectorAll('img');
+  for (const image of images) {
+    image.style.marginRight = '50px';
+  }
+  const svgIcons = document.querySelectorAll('svg.icon');
+  for (const svgIcon of svgIcons) {
+    const svgElement = svgIcon as SVGElement;
+    svgElement.style.height = '26px';
+  }
+  const graphContainers = document.querySelectorAll('div.graph-container');
+  for (const graphContainer of graphContainers) {
+    const graphContainerElement = graphContainer as HTMLElement;
+    graphContainerElement.style.maxWidth = '50%';
+  }
+
+  const graphs = document.querySelectorAll('div.main-content div.graph');
+  for (const graph of graphs) {
+    const svgSm = graph.querySelector('svg[class*="-sm"]');
+    const svg640 = graph.querySelector('svg[class*="-640"]');
+    const svgLg = graph.querySelector('svg[class*="-lg"]');
+    if (svgSm && svg640 && svgLg) {
+      svgSm.remove();
+      svgLg.remove();
+    }
+  }
+  const diagramContainers = document.querySelectorAll(
+    'div.main-content div[class*="-diagram-container"]'
+  );
+  for (const diagramContainer of diagramContainers) {
+    const svg340 = diagramContainer.querySelector('svg[class*="-340"]');
+    const svg640 = diagramContainer.querySelector('svg[class*="-640"]');
+    const svg768 = diagramContainer.querySelector('svg[class*="-768"]');
+    const svg1024 = diagramContainer.querySelector('svg[class*="-1024"]');
+    if (svg340 && svg640 && svg768 && svg1024) {
+      svg340.remove();
+      svg768.remove();
+      svg1024.remove();
+    }
+    const diagramContainerElement = diagramContainer as HTMLElement;
+    diagramContainerElement.style.maxWidth = '50%';
   }
 
   // Conditionally remove some elements if they exist at same time as other elements
-  const gifMovieElements = document.querySelectorAll(
+  removeDuplicateElements(
+    document,
+    'div.main-content .gif-player .gif-still',
     'div.main-content .gif-player .gif-movie'
   );
-  const gifStillElements = document.querySelectorAll(
-    'div.main-content .gif-player .gif-still'
+  removeDuplicateElements(
+    document,
+    'div.main-content .copy-block__heading.for-smaller',
+    'div.main-content .copy-block__heading.for-larger'
   );
-  if (gifMovieElements.length > 0 && gifStillElements.length > 0) {
-    gifMovieElements.forEach((element) => {
-      element.remove();
-    });
+  removeDuplicateElements(
+    document,
+    'div.main-content .slick-list .for-smaller',
+    'div.main-content .slick-list .for-larger'
+  );
+
+  // Replace h2 copy block headings with h4
+  const copyBlockHeadings = document.querySelectorAll('h2.copy-block__heading');
+  for (const h2 of copyBlockHeadings) {
+    const h4 = document.createElement('h4'); // Create a new h4 element
+    h4.className = h2.className;
+    h4.innerHTML = h2.innerHTML;
+    h2.replaceWith(h4);
+  }
+
+  const divLazyBgImageElements = document.querySelectorAll(
+    'div.quote-banner[data-lazy-bg-image]'
+  );
+  for (const divLazyBgImageElement of divLazyBgImageElements) {
+    const h2Element = divLazyBgImageElement.querySelector('h2');
+    if (divLazyBgImageElement && h2Element) {
+      const blockquote = document.createElement('blockquote');
+      blockquote.textContent = h2Element.textContent;
+      divLazyBgImageElement.replaceWith(blockquote);
+    }
   }
 
   // Remove all existing h1 elements to prepare for the next section
@@ -106,6 +187,20 @@ const applyCustomLogic = (document: Document) => {
   const body = document.body;
   if (body.firstChild) {
     body.insertBefore(h1, body.firstChild);
+  }
+};
+
+const removeDuplicateElements = (
+  document: Document,
+  toKeepSelector: string,
+  toRemoveSelector: string
+) => {
+  const elementsToKeep = document.querySelectorAll(toKeepSelector);
+  const elementsToRemove = document.querySelectorAll(toRemoveSelector);
+  if (elementsToKeep.length > 0 && elementsToRemove.length > 0) {
+    elementsToRemove.forEach((element) => {
+      element.remove();
+    });
   }
 };
 
